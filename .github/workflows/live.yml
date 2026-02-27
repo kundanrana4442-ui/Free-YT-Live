@@ -1,11 +1,9 @@
-name: 24x7 Free Stream
+name: 24x7 Pro Stream
 
 on:
   workflow_dispatch:
-    inputs:
-      video_url:
-        description: 'Video Ka Direct Link Yahan Daalein'
-        required: true
+  schedule:
+    - cron: '0 */5 * * *' # Har 5 ghante me auto-restart
 
 concurrency: 
   group: live-stream
@@ -18,20 +16,19 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repo (Get Files)
         uses: actions/checkout@v3
 
-      - name: Install FFmpeg
-        run: sudo apt update && sudo apt install ffmpeg -y
+      - name: Install FFmpeg & Python
+        run: sudo apt update && sudo apt install ffmpeg python3 -y
 
-      - name: Download Video (Sirf ek baar download hogi, data bachega)
-        run: wget -O myvideo.mp4 "${{ github.event.inputs.video_url }}"
-
-      - name: Start Live Stream (5.5 Hours Loop)
-        # 5.5 ghante baad yeh auto-stop hoga taaki naya loop chal sake
-        run: timeout 5.5h ffmpeg -stream_loop -1 -re -i myvideo.mp4 -c:v libx264 -preset ultrafast -b:v 2500k -maxrate 2500k -bufsize 5000k -c:a aac -b:a 128k -f flv rtmp://a.rtmp.youtube.com/live2/${{ secrets.STREAM_KEY }} || true
+      - name: Run Auto-Streamer Script
+        env:
+          YOUTUBE_URL: rtmp://a.rtmp.youtube.com/live2/${{ secrets.STREAM_KEY }}
+        # 5.5 ghante stream chalegi, uske baad script apne aap stop hogi
+        run: timeout 5.5h python3 stream.py || true
 
       - name: Auto-Restart Stream (Relay Race)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run "24x7 Free Stream" -f video_url="${{ github.event.inputs.video_url }}"
+        run: gh workflow run "24x7 Pro Stream"
