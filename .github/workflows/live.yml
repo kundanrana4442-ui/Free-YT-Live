@@ -1,0 +1,37 @@
+name: 24x7 Free Stream
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: 'Video Ka Direct Link Yahan Daalein'
+        required: true
+
+concurrency: 
+  group: live-stream
+  cancel-in-progress: true
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Install FFmpeg
+        run: sudo apt update && sudo apt install ffmpeg -y
+
+      - name: Download Video (Sirf ek baar download hogi, data bachega)
+        run: wget -O myvideo.mp4 "${{ github.event.inputs.video_url }}"
+
+      - name: Start Live Stream (5.5 Hours Loop)
+        # 5.5 ghante baad yeh auto-stop hoga taaki naya loop chal sake
+        run: timeout 5.5h ffmpeg -stream_loop -1 -re -i myvideo.mp4 -c:v libx264 -preset ultrafast -b:v 2500k -maxrate 2500k -bufsize 5000k -c:a aac -b:a 128k -f flv rtmp://a.rtmp.youtube.com/live2/${{ secrets.STREAM_KEY }} || true
+
+      - name: Auto-Restart Stream (Relay Race)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run "24x7 Free Stream" -f video_url="${{ github.event.inputs.video_url }}"
