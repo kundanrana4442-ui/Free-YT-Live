@@ -3,7 +3,7 @@ name: 24x7 Pro Stream
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */5 * * *' # Har 5 ghante me auto-restart
+    - cron: '0 */5 * * *'
 
 concurrency: 
   group: live-stream
@@ -16,16 +16,20 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Checkout Repo (Get Files)
+      - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Install FFmpeg & Python
-        run: sudo apt update && sudo apt install ffmpeg python3 -y
+      - name: Install Tools
+        run: |
+          sudo apt update
+          sudo apt install ffmpeg python3 python3-pip -y
+          pip3 install gdown requests --break-system-packages
 
       - name: Run Auto-Streamer Script
         env:
           YOUTUBE_URL: rtmp://a.rtmp.youtube.com/live2/${{ secrets.STREAM_KEY }}
-        # 5.5 ghante stream chalegi, uske baad script apne aap stop hogi
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: timeout 5.5h python3 stream.py || true
 
       - name: Auto-Restart Stream (Relay Race)
