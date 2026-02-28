@@ -27,7 +27,7 @@ jobs:
 
       - name: Run Auto-Streamer Script
         env:
-          YOUTUBE_URL: rtmp://a.rtmp.youtube.com/live2/${{ secrets.STREAM_KEY }}
+          YOUTUBE_URL: rtmp://a.rtmps.youtube.com/live2/${{ secrets.STREAM_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: timeout 5.5h python3 stream.py || true
